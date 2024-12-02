@@ -50,12 +50,6 @@ const foodDonorSchema = new mongoose.Schema(
         refreshToken: {
             type: String,
         },
-        resetPasswordToken: {
-            type: String,
-        },
-        resetPasswordExpires: {
-            type: Date,
-        },
     },
     { timestamps: true }
 );
@@ -71,7 +65,7 @@ foodDonorSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password);
 };
 
-foodDonorSchema.methods.generateAccessToken = async function () {
+foodDonorSchema.methods.generateAccessToken = async function (expiresIn) {
     return jwt.sign(
         {
             _id: this._id,
@@ -81,7 +75,7 @@ foodDonorSchema.methods.generateAccessToken = async function () {
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
-            expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
+            expiresIn: expiresIn || process.env.ACCESS_TOKEN_EXPIRY,
         }
     );
 };
