@@ -383,16 +383,7 @@ const requestPasswordReset = asyncHandler(async (req, res) => {
     }
 
     // Generate a reset token
-    const resetToken = crypto.randomBytes(32).toString("hex");
-
-    // Hash the token before saving
-    user.resetPasswordToken = crypto
-        .createHash("sha256")
-        .update(resetToken)
-        .digest("hex");
-    user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // Token valid for 15 minutes
-
-    await user.save({ validateBeforeSave: false });
+    const resetToken = user.generateAccessToken("15m");
 
     // Send email with the reset link
     const resetUrl = `${req.protocol}://${req.get(
@@ -421,27 +412,40 @@ const requestPasswordReset = asyncHandler(async (req, res) => {
 const resetPassword = asyncHandler(async (req, res) => {
     const { token } = req.params;
 
-    // Hash the token to match the stored one
-    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    // Decode the token
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    if (!decodedToken) {
+        throw new ApiError(
+            500,
+            "Failed to decode the token during password reset"
+        );
+    }
 
-    const user = await FoodDonor.findOne({
-        resetPasswordToken: hashedToken,
-        resetPasswordExpires: { $gt: Date.now() }, // Ensure token is not expired
-    });
+    const user = await FoodDonor.findById(decodedToken._id).select(
+        "-password -refreshToken"
+    );
 
     if (!user) {
         throw new ApiError(400, "Token is invalid or expired");
     }
 
     const { newPassword } = req.body;
-    // Update password and clear reset fields
-    user.password = newPassword;
-    user.resetPasswordToken = undefined;
-    user.resetPasswordExpires = undefined;
+    // Update password field
+    const updatedUser = await FoodDonor.findByIdAndUpdate(
+        user._id,
+        {
+            $set: {
+                password: newPassword,
+            },
+        },
+        {
+            new: true,
+        }
+    ).select("-password");
 
-    await user.save();
-
-    res.status(200).json(new ApiResponse(200, {}, "Password reset successful"));
+    res.status(200).json(
+        new ApiResponse(200, updatedUser, "Password reset successful")
+    );
 });
 
 export {
