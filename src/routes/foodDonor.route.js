@@ -9,10 +9,8 @@ import {
     changeCurrentPassword,
     getCurrentUser,
     updateAvatar,
-    requestPasswordReset,
-    resetPassword,
 } from "../controllers/foodDonor.controller.js";
-import { verifyJWT } from "../middlewares/foodDonorAuth.middleware.js";
+import { verifyFoodDonorJWT } from "../middlewares/foodDonorAuth.middleware.js";
 import { verifyFoodDonor } from "../middlewares/verifyFssaiLicense.middleware.js";
 import { extractLicenseDetails } from "../middlewares/extractLicenseNumber.middleware.js";
 
@@ -37,14 +35,12 @@ router.route("/register").post(
 router.route("/login").post(loginUser);
 
 // secured routes
-router.route("/logout").post(verifyJWT, logoutUser);
+router.route("/logout").post(verifyFoodDonorJWT, logoutUser);
 router.route("/refresh-token").post(refreshAccessToken);
-router.route("/change-password").post(verifyJWT, changeCurrentPassword);
-router.route("/get-fooddonor").get(verifyJWT, getCurrentUser);
-router.route("/update-fooddonor-details").patch(verifyJWT, updateUserDetails);
+router.route("/change-password").post(verifyFoodDonorJWT, changeCurrentPassword);
+router.route("/get-fooddonor").get(verifyFoodDonorJWT, getCurrentUser);
+router.route("/update-fooddonor-details").patch(verifyFoodDonorJWT, updateUserDetails);
 
-router
-    .route("/update-avatar")
-    .patch(verifyJWT, upload.single("avatar"), updateAvatar);
+router.route("/update-avatar").patch(verifyFoodDonorJWT, upload.single("avatar"), updateAvatar);
 
 export default router;

@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { FoodDonor } from "../models/foodDonor.model.js";
 
-const verifyJWT = asyncHandler(async (req, res, next) => {
+const verifyFoodDonorJWT = asyncHandler(async (req, res, next) => {
     try {
         const token =
             req.cookies?.accessToken ||
@@ -30,4 +30,4 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
     }
 });
 
-export { verifyJWT };
+export { verifyFoodDonorJWT as verifyJWT };
