@@ -370,84 +370,6 @@ const updateAvatar = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, user, "Avatar updated successfully"));
 });
 
-const requestPasswordReset = asyncHandler(async (req, res) => {
-    const { email } = req.body;
-
-    if (!email) {
-        throw new ApiError(400, "Email is required");
-    }
-
-    const user = await FoodDonor.findOne({ email });
-    if (!user) {
-        throw new ApiError(404, "No user found with that email");
-    }
-
-    // Generate a reset token
-    const resetToken = user.generateAccessToken("15m");
-
-    // Send email with the reset link
-    const resetUrl = `${req.protocol}://${req.get(
-        "host"
-    )}/api/v1/fooddonors/reset-password/${resetToken}`;
-
-    const message = `Click the link to reset your password: ${resetUrl}`;
-    const transporter = nodemailer.createTransport({
-        service: "Gmail", // or another email provider
-        auth: {
-            user: process.env.EMAIL,
-            pass: process.env.EMAIL_PASSWORD,
-        },
-    });
-
-    await transporter.sendMail({
-        from: `"Food Saver Network" <${process.env.EMAIL}>`,
-        to: user.email,
-        subject: "Password Reset Request",
-        text: message,
-    });
-
-    res.status(200).json(new ApiResponse(200, {}, "Reset link sent to email"));
-});
-
-const resetPassword = asyncHandler(async (req, res) => {
-    const { token } = req.params;
-
-    // Decode the token
-    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    if (!decodedToken) {
-        throw new ApiError(
-            500,
-            "Failed to decode the token during password reset"
-        );
-    }
-
-    const user = await FoodDonor.findById(decodedToken._id).select(
-        "-password -refreshToken"
-    );
-
-    if (!user) {
-        throw new ApiError(400, "Token is invalid or expired");
-    }
-
-    const { newPassword } = req.body;
-    // Update password field
-    const updatedUser = await FoodDonor.findByIdAndUpdate(
-        user._id,
-        {
-            $set: {
-                password: newPassword,
-            },
-        },
-        {
-            new: true,
-        }
-    ).select("-password");
-
-    res.status(200).json(
-        new ApiResponse(200, updatedUser, "Password reset successful")
-    );
-});
-
 export {
     registerUser,
     loginUser,
@@ -457,6 +379,4 @@ export {
     getCurrentUser,
     updateUserDetails,
     updateAvatar,
-    requestPasswordReset,
-    resetPassword,
 };

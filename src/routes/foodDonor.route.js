@@ -47,7 +47,4 @@ router
     .route("/update-avatar")
     .patch(verifyJWT, upload.single("avatar"), updateAvatar);
 
-router.route("/forgot-password").post(requestPasswordReset);
-router.route("/reset-password/:token").post(resetPassword);
-
 export default router;
