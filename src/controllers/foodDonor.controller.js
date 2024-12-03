@@ -171,7 +171,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
 const logoutUser = asyncHandler(async (req, res) => {
     await FoodDonor.findByIdAndUpdate(
-        req.user._id,
+        req.foodDonor._id,
         {
             $set: {
                 refreshToken: undefined,
@@ -293,7 +293,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(
                 200,
-                req.user,
+                req.foodDonor,
                 "Current FoodDonor details sent successfully"
             )
         );
@@ -307,7 +307,7 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     }
 
     const user = await FoodDonor.findByIdAndUpdate(
-        req.user._id,
+        req.foodDonor._id,
         {
             $set: {
                 email: email || req.user.email,
@@ -354,7 +354,7 @@ const updateAvatar = asyncHandler(async (req, res) => {
     }
 
     const user = await FoodDonor.findByIdAndUpdate(
-        req.user._id,
+        req.foodDonor._id,
         {
             $set: {
                 avatar: avatar.url,

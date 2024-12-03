@@ -23,7 +23,7 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
             throw new ApiError(401, "Invalid access token");
         }
 
-        req.user = user;
+        req.foodDonor = user;
         next();
     } catch (error) {
         throw new ApiError(500, "Token Verification failed");

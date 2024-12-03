@@ -12,7 +12,7 @@ import {
     requestPasswordReset,
     resetPassword,
 } from "../controllers/foodDonor.controller.js";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyJWT } from "../middlewares/foodDonorAuth.middleware.js";
 import { verifyFoodDonor } from "../middlewares/verifyFssaiLicense.middleware.js";
 import { extractLicenseDetails } from "../middlewares/extractLicenseNumber.middleware.js";
 
