@@ -30,10 +30,12 @@ app.use(cookieParser());
 
 // importing the routes
 import foodDonorRouter from "./routes/foodDonor.route.js";
-import ngoRouter from "./routes/ngo.route.js"
+import ngoRouter from "./routes/ngo.route.js";
+import mapsRouter from "./routes/maps.route.js";
 
 // declaring the routes
 app.use("/api/v1/foodDonors", foodDonorRouter);
 app.use("/api/v1/ngos", ngoRouter);
+app.use("/api/v1/maps", mapsRouter);
 
 export default app;

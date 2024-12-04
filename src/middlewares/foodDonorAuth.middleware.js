@@ -30,4 +30,4 @@ const verifyFoodDonorJWT = asyncHandler(async (req, res, next) => {
     }
 });
 
-export { verifyFoodDonorJWT as verifyJWT };
+export { verifyFoodDonorJWT };
