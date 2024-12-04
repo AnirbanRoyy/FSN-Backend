@@ -9,10 +9,8 @@ import {
     changeCurrentPassword,
     getCurrentUser,
     updateAvatar,
-} from "../controllers/foodDonor.controller.js";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { verifyFoodDonor } from "../middlewares/verifyFssaiLicense.middleware.js";
-import { extractLicenseDetails } from "../middlewares/extractLicenseNumber.middleware.js";
+} from "../controllers/ngo.controller.js";
+import { verifyJWT } from "../middlewares/ngoAuth.middleware.js";
 
 const router = Router();
 
@@ -23,12 +21,10 @@ router.route("/register").post(
             maxCount: 1,
         },
         {
-            name: "fssaiLicense",
+            name: "ngoLicense",
             maxCount: 1,
         },
     ]),
-    extractLicenseDetails,
-    verifyFoodDonor,
     registerUser
 );
 

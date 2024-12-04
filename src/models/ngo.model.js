@@ -37,7 +37,14 @@ const ngoSchema = new mongoose.Schema(
             required: true,
         },
         location: {
-            type: String,
+            city: {
+                type: String,
+                required: true,
+            },
+            state: {
+                type: String,
+                required: true,
+            },
         },
         contactInfo: {
             type: String,
@@ -50,4 +57,4 @@ const ngoSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-export const NGO = mongoose.model("NGO", ngoSchema);
+export const Ngo = mongoose.model("Ngo", ngoSchema);
