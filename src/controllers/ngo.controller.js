@@ -8,13 +8,29 @@ import { Ngo } from "../models/ngo.model.js";
 
 const registerUser = asyncHandler(async (req, res) => {
     // get data from req.body
-    const { username, email, password, fullName } = req.body;
+    const {
+        username,
+        email,
+        password,
+        fullName,
+        ngoLicense,
+        contactInfo,
+        city,
+        state,
+    } = req.body;
 
     // validate the data
     if (
-        [username, email, password, fullName].some(
-            (field) => field?.trim() === ""
-        )
+        [
+            username,
+            email,
+            password,
+            fullName,
+            ngoLicense,
+            contactInfo,
+            city,
+            state,
+        ].some((field) => field?.trim() === "")
     ) {
         throw new ApiError(401, "Required fields are missing");
     }
@@ -32,7 +48,7 @@ const registerUser = asyncHandler(async (req, res) => {
         $or: [{ username }, { email }],
     });
     if (existingUser) {
-        throw new ApiError(401, "User already exists");
+        throw new ApiError(401, "Ngo already exists");
     }
 
     // upload on cloudinary
@@ -40,16 +56,19 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // create user
     const user = await Ngo.create({
-        username: username.split(" ").join(""), // the user might send a username with spaces that might cause problem when getting user channel details from url
+        username, // the user might send a username with spaces that might cause problem when getting user channel details from url
         fullName,
         email,
         password,
-        avatar: avatar,
+        avatar: avatar.url,
+        ngoLicense,
+        location: { city, state },
+        contactInfo,
     });
 
     // validate the creation
     if (!user) {
-        throw new ApiError(500, "User could not be registered");
+        throw new ApiError(500, "Ngo could not be registered");
     }
 
     // remove the password and refresh token fields
@@ -292,14 +311,14 @@ const updateAvatar = asyncHandler(async (req, res) => {
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar Local Path not found to update");
     }
-    
+
     // upload on cloudinary
     const avatar = await uploadOnCloudinary(avatarLocalPath);
-    
+
     // delete old image
     const oldAvatarUrl = req?.ngo?.avatar;
     if (!oldAvatarUrl) {
-        throw new ApiError(401, "oldAvatarUrl not found")
+        throw new ApiError(401, "oldAvatarUrl not found");
     }
 
     deleteFromCloudinary(oldAvatarUrl);
@@ -322,7 +341,6 @@ const updateAvatar = asyncHandler(async (req, res) => {
             new: true,
         }
     ).select("-password");
-
 
     return res
         .status(200)
