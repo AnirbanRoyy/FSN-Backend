@@ -263,7 +263,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     // we will be using verifyJwt middleware in foodDonor.route.js
 
     // get user from req
-    const user = await FoodDonor.findById(req.user?._id);
+    const user = await FoodDonor.findById(req.foodDonor?._id);
     if (!user) {
         throw new ApiError(
             401,
@@ -327,7 +327,7 @@ const updateUserDetails = asyncHandler(async (req, res) => {
 });
 
 const updateAvatar = asyncHandler(async (req, res) => {
-    const oldAvatar = req.user.avatar;
+    const oldAvatar = req.foodDonor.avatar;
     if (!oldAvatar) {
         throw new ApiError(401, "oldAvatar not found");
     }
