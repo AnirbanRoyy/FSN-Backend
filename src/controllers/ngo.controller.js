@@ -347,6 +347,13 @@ const updateAvatar = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, user, "Avatar updated successfully"));
 });
 
+const getAllNgos = asyncHandler(async (req, res) => {
+    const ngos = await Ngo.find().select("-password -refreshToken");
+    return res
+        .status(200)
+        .json(new ApiResponse(200, ngos, "All Ngo details sent successfully"));
+});
+
 export {
     registerUser,
     loginUser,
@@ -356,4 +363,5 @@ export {
     getCurrentUser,
     updateUserDetails,
     updateAvatar,
+    getAllNgos,
 };
