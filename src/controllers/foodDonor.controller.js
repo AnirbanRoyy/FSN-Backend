@@ -56,8 +56,8 @@ const registerUser = asyncHandler(async (req, res) => {
     // Create new user
     const createdUser = await FoodDonor.create({
         // name: req.body.userLicense.company_name,
-        username: username.toLowerCase().split(" ").join("").trim(),
-        email: email.toLowerCase().split(" ").join("").trim(),
+        username: username.toLowerCase().trim(),
+        email: email.toLowerCase().trim(),
         password,
         avatar: avatar.url,
         type,
@@ -120,7 +120,7 @@ const loginUser = asyncHandler(async (req, res) => {
     // find the user
     const user = await FoodDonor.findOne({
         $or: [
-            { username: username.toLowerCase().split(" ").join("") },
+            { username: username.toLowerCase().trim() },
             { email: email.toLowerCase().trim() },
         ],
     });
@@ -130,7 +130,7 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     // validate the password
-    const isPasswordValid = user.isPasswordCorrect(password);
+    const isPasswordValid = await user.isPasswordCorrect(password);
     if (!isPasswordValid) {
         throw new ApiError(401, "Invalid Password during login");
     }
@@ -274,7 +274,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     // check if old password is correct
     const isPasswordValid = await user.isPasswordCorrect(oldPassword);
     if (!isPasswordValid) {
-        throw new ApiError("Invalid oldPassword");
+        throw new ApiError(400, "Invalid oldPassword");
     }
 
     user.password = newPassword;
