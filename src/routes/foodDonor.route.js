@@ -9,6 +9,7 @@ import {
     changeCurrentPassword,
     getCurrentUser,
     updateAvatar,
+    getAllFoodDonors,
 } from "../controllers/foodDonor.controller.js";
 import { verifyFoodDonorJWT } from "../middlewares/foodDonorAuth.middleware.js";
 import { verifyFoodDonor } from "../middlewares/verifyFssaiLicense.middleware.js";
@@ -33,6 +34,7 @@ router.route("/register").post(
 );
 
 router.route("/login").post(loginUser);
+router.route("/get-all-fooddonors").post(getAllFoodDonors);
 
 // secured routes
 router.route("/logout").post(verifyFoodDonorJWT, logoutUser);

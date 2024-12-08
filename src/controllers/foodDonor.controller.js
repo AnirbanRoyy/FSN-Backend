@@ -370,6 +370,19 @@ const updateAvatar = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, user, "Avatar updated successfully"));
 });
 
+const getAllFoodDonors = asyncHandler(async (req, res) => {
+    const foodDonors = await FoodDonor.find().select("-password -refreshToken");
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                foodDonors,
+                "All foodDonors details sent successfully"
+            )
+        );
+});
+
 export {
     registerUser,
     loginUser,
@@ -379,4 +392,5 @@ export {
     getCurrentUser,
     updateUserDetails,
     updateAvatar,
+    getAllFoodDonors,
 };
