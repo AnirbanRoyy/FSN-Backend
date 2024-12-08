@@ -10,6 +10,7 @@ import {
     getCurrentUser,
     updateAvatar,
     getAllNgos,
+    getOTP,
 } from "../controllers/ngo.controller.js";
 import { verifyJWT } from "../middlewares/ngoAuth.middleware.js";
 
@@ -31,6 +32,7 @@ router.route("/register").post(
 
 router.route("/login").post(loginUser);
 router.route("/get-all-ngos").post(getAllNgos);
+router.route("/get-otp").post(getOTP);
 
 // secured routes
 router.route("/logout").post(verifyJWT, logoutUser);

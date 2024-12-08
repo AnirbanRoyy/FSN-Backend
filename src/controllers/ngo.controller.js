@@ -354,6 +354,31 @@ const getAllNgos = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, ngos, "All Ngo details sent successfully"));
 });
 
+const getOTP = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        throw new ApiError(400, "email is required to sent password reset otp");
+    }
+
+    const user = await FoodDonor.findOne({ email });
+    if (!user) {
+        throw new ApiError(400, "foodDonor not found");
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit OTP
+
+    const message = `Your OTP to reset the password is: ${otp}`;
+
+    try {
+        await sendEmail(email, "Password Reset OTP", message);
+        return res
+            .status(200)
+            .json(new ApiResponse(200, { otp }, "OTP sent successfully"));
+    } catch (error) {
+        throw new ApiError(500, "Failed to send OTP");
+    }
+});
+
 export {
     registerUser,
     loginUser,
@@ -364,4 +389,5 @@ export {
     updateUserDetails,
     updateAvatar,
     getAllNgos,
+    getOTP,
 };

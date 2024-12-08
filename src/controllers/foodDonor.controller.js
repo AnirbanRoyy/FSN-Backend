@@ -7,6 +7,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
+import sendEmail from "../utils/sendMail.js";
 
 const registerUser = asyncHandler(async (req, res) => {
     // get the data from form
@@ -383,6 +384,31 @@ const getAllFoodDonors = asyncHandler(async (req, res) => {
         );
 });
 
+const getOTP = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        throw new ApiError(400, "email is required to sent password reset otp");
+    }
+
+    const user = await FoodDonor.findOne({ email });
+    if (!user) {
+        throw new ApiError(400, "foodDonor not found");
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000); // Generate a 6-digit OTP
+
+    const message = `Your OTP to reset the password is: ${otp}`;
+
+    try {
+        await sendEmail(email, "Password Reset OTP", message);
+        return res
+            .status(200)
+            .json(new ApiResponse(200, { otp }, "OTP sent successfully"));
+    } catch (error) {
+        throw new ApiError(500, "Failed to send OTP");
+    }
+});
+
 export {
     registerUser,
     loginUser,
@@ -393,4 +419,5 @@ export {
     updateUserDetails,
     updateAvatar,
     getAllFoodDonors,
+    getOTP,
 };
