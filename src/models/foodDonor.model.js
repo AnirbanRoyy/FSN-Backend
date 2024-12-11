@@ -35,7 +35,7 @@ const foodDonorSchema = new mongoose.Schema(
         },
         type: {
             type: String,
-            enum: ["restaurant", "caterer"],
+            enum: ["restaurant", "caterer", "others"],
         },
         fssaiLicense: {
             type: Object,
