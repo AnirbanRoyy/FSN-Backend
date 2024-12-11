@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getNgoDeliveryHistory, startDelivery } from "../controllers/delivery.controller";
+import { getNgoDeliveryHistory, startDelivery } from "../controllers/delivery.controller.js";
 
 const router = Router();
 
