@@ -14,10 +14,6 @@ const foodItemSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
-        expiryDate: {
-            type: String,
-            required: true,
-        },
         coverImage: {
             type: String,
             required: true,
