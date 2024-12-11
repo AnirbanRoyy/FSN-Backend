@@ -13,6 +13,7 @@ import {
     getOTP,
 } from "../controllers/ngo.controller.js";
 import { verifyJWT } from "../middlewares/ngoAuth.middleware.js";
+import { getNgoDeliveryHistory } from "../controllers/delivery.controller.js";
 
 const router = Router();
 
@@ -40,6 +41,7 @@ router.route("/refresh-token").post(refreshAccessToken);
 router.route("/change-password").post(verifyJWT, changeCurrentPassword);
 router.route("/get-user").get(verifyJWT, getCurrentUser);
 router.route("/update-user-details").patch(verifyJWT, updateUserDetails);
+router.route("/get-delivery-history").post(verifyJWT, getNgoDeliveryHistory);
 
 router
     .route("/update-avatar")
