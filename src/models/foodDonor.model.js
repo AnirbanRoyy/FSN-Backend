@@ -50,6 +50,9 @@ const foodDonorSchema = new mongoose.Schema(
         refreshToken: {
             type: String,
         },
+        geoCodes: {
+            type: String,
+        },
     },
     { timestamps: true }
 );
