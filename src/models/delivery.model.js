@@ -6,13 +6,10 @@ const deliverySchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "NGO",
         },
-        deliveryDate: {
-            type: String,
-            required: true
-        },
         status: {
             type: String,
             required: true,
+            default: "Started"
         },
         donorId: {
             type: mongoose.Schema.Types.ObjectId,

@@ -6,7 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { v4 as uuidv4 } from "uuid";
 
 const getTravelInfo = asyncHandler(async (req, res) => {
-    const { origin, destination } = req.query;
+    const { origin, destination } = req.body;
 
     if (!origin || !destination) {
         throw new ApiError(400, "Origin and destination are required");
