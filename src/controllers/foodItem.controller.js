@@ -1,23 +1,22 @@
 import { FoodItem } from "../models/foodItem.model.js";
-import asyncHandler from "../utils/asyncHandler.js";
-import ApiError from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 // Controller to create a new food item
 const createFoodItem = asyncHandler(async (req, res) => {
-    const { donorId, description, quantity } = req.body;
+    const { description, quantity } = req.body;
 
     // Validate input
-    if (
-        [donorId, description, quantity].some(
-            (field) => !field || field.trim() === ""
-        )
-    ) {
+    if ([description, quantity].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "All fields are required");
     }
 
     // get the coverImage
-    const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
+    const coverImageLocalPath = req.file?.path;
+    console.log(req.file);
+
     if (!coverImageLocalPath) {
         throw new ApiError(
             401,
@@ -36,7 +35,7 @@ const createFoodItem = asyncHandler(async (req, res) => {
 
     // Create the food item document
     const foodItem = await FoodItem.create({
-        donorId,
+        donorId: req.foodDonor._id,
         description,
         quantity,
         coverImage: coverImage.url,
@@ -48,4 +47,28 @@ const createFoodItem = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, foodItem, "Food item created successfully"));
 });
 
-export { createFoodItem };
+const getFoodItemsByDonor = asyncHandler(async (req, res) => {
+    const donorId = req.foodDonor._id;
+
+    // Validate donorId
+    if (!donorId) {
+        throw new ApiError(400, "Donor ID is required");
+    }
+
+    // Fetch food items by donor ID
+    const foodItems = await FoodItem.find({ donorId });
+
+    // Check if any food items exist
+    if (!foodItems.length) {
+        throw new ApiError(404, "No food items found for the specified donor");
+    }
+
+    // Send response
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, foodItems, "Food items fetched successfully")
+        );
+});
+
+export { createFoodItem, getFoodItemsByDonor };
