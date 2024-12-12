@@ -5,10 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js";
-import nodemailer from "nodemailer";
-import crypto from "crypto";
 import sendEmail from "../utils/sendMail.js";
-import { getGeocode } from "./maps.controller.js";
 
 const registerUser = asyncHandler(async (req, res) => {
     // get the data from form
@@ -55,10 +52,6 @@ const registerUser = asyncHandler(async (req, res) => {
         );
     }
 
-    const geoCodes = await getGeocode(
-        `${req.body.userLicense.premise_address}, ${req.body.userLicense.state}`
-    );
-
     // Create new user
     const createdUser = await FoodDonor.create({
         // name: req.body.userLicense.company_name,
@@ -73,7 +66,6 @@ const registerUser = asyncHandler(async (req, res) => {
             ", " +
             req.body.userLicense.state,
         contactInfo,
-        geoCodes
     });
 
     const user = await FoodDonor.findById(createdUser._id).select(

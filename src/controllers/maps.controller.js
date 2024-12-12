@@ -55,9 +55,7 @@ const getTravelInfo = asyncHandler(async (req, res) => {
     }
 });
 
-const getGeocode = asyncHandler(async (req, res) => {
-    const { address, language } = req.query;
-
+const getGeocode = asyncHandler(async (address) => {
     if (!address) {
         throw new ApiError(400, "Address is required");
     }

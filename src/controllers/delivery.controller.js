@@ -1,15 +1,37 @@
 import { Delivery } from "../models/delivery.model.js";
-import {asyncHandler} from "../utils/asyncHandler.js";
-import {ApiError} from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { Ngo } from "../models/ngo.model.js";
+import { getGeocode } from "./maps.controller.js";
+import sendEmail from "../utils/sendMail.js";
 
 const startDelivery = asyncHandler(async (req, res) => {
     // Get the details
-    const { ngoId, donorId, foodItemId } = req.body;
+    const { ngoId, donorId, foodItemId, ngoLocation, foodDonorLocation } =
+        req.body;
 
     // Validate the data
     if ([ngoId, donorId, foodItemId].some((field) => !field?.trim())) {
         throw new ApiError(400, "Required fields are missing");
+    }
+
+    // retrieve ngo
+    const ngo = await Ngo.findById(ngoId);
+    if (!ngo) {
+        throw new ApiError(404, "NGO not found");
+    }
+
+    // retrieve food item
+    const foodItem = await Delivery.findById(foodItemId);
+    if (!foodItem) {
+        throw new ApiError(404, "Food item not found");
+    }
+
+    // retrieve food donor
+    const foodDonor = await Delivery.findById(donorId);
+    if (!foodDonor) {
+        throw new ApiError(404, "Food Donor not found");
     }
 
     // Create a new delivery record
@@ -17,63 +39,52 @@ const startDelivery = asyncHandler(async (req, res) => {
         ngoId,
         donorId,
         foodItemId,
-        status: "Pending",
+        status: "Started",
     });
 
-    // Aggregate food donor and NGO details
-    const result = await Delivery.aggregate([
-        {
-            $match: { _id: delivery._id }, // Match the created delivery document
-        },
-        {
-            $lookup: {
-                from: "fooddonors", // Collection of food donors
-                localField: "donorId",
-                foreignField: "_id",
-                as: "foodDonor",
-            },
-        },
-        {
-            $lookup: {
-                from: "ngos", // Collection of NGOs
-                localField: "ngoId",
-                foreignField: "_id",
-                as: "ngo",
-            },
-        },
-        {
-            $addFields: {
-                foodDonor: { $arrayElemAt: ["$foodDonor", 0] }, // Extract first element
-                ngo: { $arrayElemAt: ["$ngo", 0] }, // Extract first element
-            },
-        },
-        {
-            $project: {
-                foodDonorLocation: "$foodDonor.location",
-                ngoLocation: "$ngo.location",
-                foodDonorUsername: "$foodDonor.username",
-                ngoName: "$ngo.name", // Include more fields as needed
-            },
-        },
-    ]);
+    const updatedNgo = await Ngo.findByIdAndUpdate(
+        ngoId,
+        { $set: { geoCodes: ngoLocation } },
+        { new: true }
+    );
 
-    // Check if aggregation returned a result
-    if (!result || result.length === 0) {
-        throw new ApiError(404, "Delivery details not found");
+    const updatedDonor = await Delivery.findByIdAndUpdate(
+        donorId,
+        { $set: { geoCodes: foodDonorLocation } },
+        { new: true }
+    );
+
+    // generate otp and send to ngo on email
+    const otp = Math.floor(100000 + Math.random() * 900000);
+
+    // send otp to ngo
+    try {
+        await sendEmail(ngo.email, "Delivery started", `Your OTP is ${otp}`);
+    } catch (error) {
+        throw new ApiError(500, "Failed to send email");
     }
-
     // Send response to the frontend
-    return res.status(201).json({
-        message: "Delivery process started",
-        deliveryDetails: result[0],
-    });
+    return res.status(201).json(
+        new ApiResponse(
+            201,
+            {
+                delivery,
+                foodDonorLocation,
+                ngoLocation,
+                foodDonorUsername: foodDonor.username,
+                ngoUsername: ngo.username,
+            },
+            "Delivery started successfully"
+        )
+    );
 });
 
 const getNgoDeliveryHistory = asyncHandler(async (req, res) => {
+    const { ngoId } = req.body;
     const deliveries = await Delivery.aggregate([
         // Match deliveries by ngoId
         {
-            $match: { ngoId: mongoose.Types.ObjectId(req.body.ngo._id) },
+            $match: { ngoId: ngoId },
         },
         // Lookup for Food Donor details
         {
@@ -104,8 +115,8 @@ const getNgoDeliveryHistory = asyncHandler(async (req, res) => {
         {
             $project: {
                 _id: 1, // Include the delivery ID
-                ngoName: "$ngo.name",
-                foodDonorName: "$foodDonor?.name" || "$foodDonor.username",
+                ngoUsername: "$ngo.username",
+                foodDonorUsername: "$foodDonor?.username",
                 ngoLocation: "$ngo.location",
                 foodDonorLocation: "$foodDonor.location",
                 deliveryDate: "$createdAt",

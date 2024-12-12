@@ -48,6 +48,11 @@ const ngoSchema = new mongoose.Schema(
                 required: true,
             },
         },
+        geoCodes: {
+            type: { type: String, enum: ["Point"] },
+            coordinates: { type: [Number] }, // [longitude, latitude]
+        },
+        isInterested: { type: Boolean, default: false },
         contactInfo: {
             type: String,
             required: true,
@@ -58,6 +63,8 @@ const ngoSchema = new mongoose.Schema(
     },
     { timestamps: true }
 );
+
+ngoSchema.index({ geoCodes: "2dsphere" });
 
 ngoSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();

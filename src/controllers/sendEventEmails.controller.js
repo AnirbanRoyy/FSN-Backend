@@ -1,94 +1,74 @@
-import sendEmail from "./sendMail.js";
-import NGO from "../models/ngoModel.js";
-import FoodItem from "../models/foodItem.model.js";
-import { getGeocode, getTravelInfo } from "./maps.controller.js";
+// Import required modules
+import nodemailer from "nodemailer";
+import mongoose from "mongoose"; // Assuming you use MongoDB
+import { NGO } from "../models/ngoModel.js"; // Your NGO schema
 
-// OpenCage API geocoding function
-async function geocodeAddress(address) {
-    const apiKey = "040e6c0e5ca9400eaeae724b5223d10a";
-    const url = `https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(
-        address
-    )}&key=${apiKey}`;
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (data.results.length > 0) {
-        const { lat, lng } = data.results[0].geometry;
-        return { lat, lng };
-    } else {
-        throw new Error("Address not found.");
-    }
-}
-
-export const sendEventEmails = async (eventId) => {
+/**
+ * Controller to send emails to nearby NGOs based on food donor's location
+ */
+export const sendEmail = async (req, res) => {
     try {
-        const event = await FoodItem.findById(eventId);
-        if (!event) throw new Error("Event not found.");
+        const { latitude, longitude } = req.body;
 
-        const { location, address } = event;
-        const donorLocation = location || (await geocodeAddress(address));
+        if (!latitude || !longitude) {
+            return res.status(400).json({ message: "Location is required." });
+        }
 
-        let radius = 5; // Initial search radius in km
-        let notificationSent = false;
+        // Define search radius in kilometers
+        const radiusInKm = 10;
 
-        const sendEmailsInRadius = async () => {
-            if (notificationSent) return;
+        // Find nearby NGOs within the radius
+        const nearbyNGOs = await NGO.find({
+            location: {
+                $geoWithin: {
+                    $centerSphere: [[longitude, latitude], radiusInKm / 6378.1], // Earth radius in km
+                },
+            },
+        });
 
-            const ngos = await NGO.find(); // Fetch all NGOs
-            const nearbyNGOs = await Promise.all(
-                ngos.map(async (ngo) => {
-                    const ngoLocation =
-                        ngo.location || (await geocodeAddress(ngo.address));
-                    const distance = await getTravelInfo(
-                        donorLocation.lat,
-                        donorLocation.lng,
-                        ngoLocation.lat,
-                        ngoLocation.lng
-                    );
-                    return distance <= radius ? ngo : null;
-                })
-            );
+        if (nearbyNGOs.length === 0) {
+            return res
+                .status(404)
+                .json({ message: "No NGOs found in the specified region." });
+        }
 
-            const filteredNGOs = nearbyNGOs.filter((ngo) => ngo !== null);
-            if (filteredNGOs.length > 0) {
-                await Promise.all(
-                    filteredNGOs.map((ngo) =>
-                        sendEmail(
-                            ngo.email,
-                            "Food Donation Event Near You",
-                            `A food donation event has been scheduled near you. Click the link to learn more: [event/${eventId}]`
-                        )
-                    )
-                );
-                notificationSent = true;
-            } else {
-                console.log(`No NGOs found within ${radius} km.`);
-            }
+        // Prepare email content
+        const subject = "Food Donation Opportunity Nearby!";
+        const emailBody = `
+      <p>Hello,</p>
+      <p>We have a food donation opportunity near your location. Please contact the food donor for more details.</p>
+      <p>Thank you for your support!</p>
+    `;
 
-            if (!notificationSent) {
-                setTimeout(() => {
-                    radius += 5; // Increase radius
-                    sendEmailsInRadius();
-                }, 2 * 60 * 60 * 1000); // Retry after 2 hours
-            }
-        };
+        // Nodemailer setup (using a test account or real SMTP details)
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.EMAIL_USERNAME, // Your email
+                pass: process.env.EMAIL_PASS, // Your email password or app password
+            },
+        });
 
-        sendEmailsInRadius();
+        // Send emails to all NGOs
+        const emailPromises = nearbyNGOs.map((ngo) =>
+            transporter.sendMail({
+                from: process.env.EMAIL_USERNAME,
+                to: ngo.email,
+                subject,
+                html: emailBody,
+            })
+        );
+
+        await Promise.all(emailPromises);
+
+        res.status(200).json({
+            message: "Emails sent to nearby NGOs successfully!",
+        });
     } catch (error) {
-        console.error("Error sending event emails:", error.message);
-    }
-};
-
-export const registerInterest = async (ngoId, eventId) => {
-    try {
-        const ngo = await NGO.findById(ngoId);
-        const event = await FoodItem.findById(eventId);
-        if (!ngo || !event) throw new Error("NGO or Event not found.");
-
-        event.interestedNGOs.push(ngoId);
-        await event.save();
-        console.log("NGO registered interest in the event.");
-    } catch (error) {
-        console.error("Error registering NGO interest:", error.message);
+        console.error("Error sending emails:", error);
+        res.status(500).json({
+            message: "An error occurred while sending emails.",
+            error: error.message,
+        });
     }
 };
