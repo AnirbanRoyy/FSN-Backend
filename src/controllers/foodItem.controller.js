@@ -41,6 +41,13 @@ const createFoodItem = asyncHandler(async (req, res) => {
         coverImage: coverImage.url,
     });
 
+    if (!foodItem) {
+        throw new ApiError(
+            500,
+            "Failed to create food item during registration"
+        );
+    }
+
     // Send response
     return res
         .status(201)

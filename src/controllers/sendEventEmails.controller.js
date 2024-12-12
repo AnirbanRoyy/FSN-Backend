@@ -1,27 +1,23 @@
-// Import required modules
-import nodemailer from "nodemailer";
-import mongoose from "mongoose"; // Assuming you use MongoDB
-import { NGO } from "../models/ngoModel.js"; // Your NGO schema
+// import nodemailer from "nodemailer";
+// import mongoose from "mongoose"; // Assuming you use MongoDB
+// import { NGO } from "../models/ngoModel.js"; // Your NGO schema
 
-/**
- * Controller to send emails to nearby NGOs based on food donor's location
- */
+import { Ngo } from "../models/ngo.model.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+
 export const sendEmail = async (req, res) => {
     try {
-        const { latitude, longitude } = req.body;
-
-        if (!latitude || !longitude) {
-            return res.status(400).json({ message: "Location is required." });
-        }
+        const { longitude, latitude } = req.body;
 
         // Define search radius in kilometers
         const radiusInKm = 10;
 
         // Find nearby NGOs within the radius
-        const nearbyNGOs = await NGO.find({
+        const nearbyNGOs = await Ngo.find({
             location: {
                 $geoWithin: {
-                    $centerSphere: [[longitude, latitude], radiusInKm / 6378.1], // Earth radius in km
+                    $centerSphere: [[longitude, latitude], radiusInKm / 6378.1],
                 },
             },
         });
@@ -40,12 +36,12 @@ export const sendEmail = async (req, res) => {
       <p>Thank you for your support!</p>
     `;
 
-        // Nodemailer setup (using a test account or real SMTP details)
+        // Nodemailer setup
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
-                user: process.env.EMAIL_USERNAME, // Your email
-                pass: process.env.EMAIL_PASS, // Your email password or app password
+                user: process.env.EMAIL_USERNAME,
+                pass: process.env.EMAIL_PASS,
             },
         });
 
@@ -61,14 +57,10 @@ export const sendEmail = async (req, res) => {
 
         await Promise.all(emailPromises);
 
-        res.status(200).json({
-            message: "Emails sent to nearby NGOs successfully!",
-        });
+        res.status(200).json(
+            new ApiResponse(200, null, "Emails sent successfully")
+        );
     } catch (error) {
-        console.error("Error sending emails:", error);
-        res.status(500).json({
-            message: "An error occurred while sending emails.",
-            error: error.message,
-        });
+        throw new ApiError(500, "Failed to send emails");
     }
 };
